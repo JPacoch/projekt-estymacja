@@ -75,6 +75,14 @@ ggplot(pomiary_clean, aes(y = PM10)) +
   scale_x_discrete() + geom_boxplot()
 
 #modelowanie
+vario_cloud = variogram(PM10 ~ 1, locations = pomiary_clean, 
+                        cloud = TRUE)
+plot(vario_cloud)
+
+vario_par = variogram(PM10 ~ 1, locations = pomiary_clean,
+                      cutoff = 18000, width = 1200, map = TRUE)
+plot(vario_par) #zjawisko nie wykazuje anizotropii
+
 
 
 #metoda sredniej wazonej odleglscia
