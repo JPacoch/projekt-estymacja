@@ -83,10 +83,4 @@ idw_pomiary = idw(PM10 ~ 1, locations = pomiary_clean,
 
 plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
 
-#metoda funkcji sklejanych
-tps_pomiary = Tps(st_coordinates(pomiary_clean), pomiary_clean$PM10)
-siatka$tps_pred = predict(tps_pomiary, st_coordinates(siatka))
-siatka$tps_pred[is.na(siatka$X2)] = NA
 
-plot(siatka["tps_pred"], 
-     main = "Funkcje sklejane", col = palette)
