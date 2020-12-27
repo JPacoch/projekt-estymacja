@@ -79,11 +79,19 @@ vario_cloud = variogram(PM10 ~ 1, locations = pomiary_clean,
                         cloud = TRUE)
 plot(vario_cloud)
 
-vario_par = variogram(PM10 ~ 1, locations = pomiary_clean,
-                      cutoff = 18000, width = 1200, map = TRUE)
-plot(vario_par) #zjawisko nie wykazuje anizotropii
+vario = variogram(PM10 ~ 1, locations = pomiary_clean,
+                      cutoff = 18000, width = 1200, map = FALSE)
+plot(vario) #zjawisko nie wykazuje anizotropii
 
+model = vgm(psill = 15, model = "Sph", range = 3000)
+model
 
+plot(vario, model = model)
+
+fitted_sph = fit.variogram(vario, model)
+fitted_sph
+
+plot(vario, model = fitted_sph)
 
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary_clean,
