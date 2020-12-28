@@ -79,19 +79,26 @@ vario_cloud = variogram(PM10 ~ 1, locations = pomiary_clean,
                         cloud = TRUE)
 plot(vario_cloud)
 
-vario = variogram(PM10 ~ 1, locations = pomiary_clean,
+vario_clean = variogram(PM10 ~ 1, locations = pomiary_clean,
                       cutoff = 18000, width = 1200, map = FALSE)
-plot(vario) #zjawisko nie wykazuje anizotropii
+plot(vario_clean) #zjawisko nie wykazuje anizotropii
 
-model = vgm(psill = 15, model = "Sph", range = 3000)
-model
+model_clean = vgm(psill = 5, model = "Gau", range = 4000, nugget = 13)
 
-plot(vario, model = model)
+#gau + nugget wyglada spoko
+plot(vario_clean, model = model_clean)
 
-fitted_sph = fit.variogram(vario, model)
-fitted_sph
+fitted_clean_gaunug = fit.variogram(vario, model_clean)
+fitted_clean_gaunug
 
-plot(vario, model = fitted_sph)
+plot(vario_clean, model = fitted_clean_gaunug)
+
+model_clean_zl = vgm(10, "Gau", 3000, 
+                add.to = vgm(4, model = "Sph",
+                             range = 5000, nugget = 3.5))
+fitted_clean_gausph = fit.variogram(vario, model_clean_zl)
+plot(vario_clean, model = fitted_clean_gausph)
+
 
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary_clean,
