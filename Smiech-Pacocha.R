@@ -96,7 +96,7 @@ plot(vario_clean, model = fitted_clean_gaunug)
 model_clean_zl = vgm(10, "Gau", 3000, 
                 add.to = vgm(4, model = "Sph",
                              range = 5000, nugget = 3.5))
-fitted_clean_gausph = fit.variogram(vario, model_clean_zl)
+fitted_clean_gausph = fit.variogram(vario_clean, model_clean_zl)
 plot(vario_clean, model = fitted_clean_gausph)
 
 
@@ -106,4 +106,16 @@ idw_pomiary = idw(PM10 ~ 1, locations = pomiary_clean,
 
 plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
 
+#przed wyczyszczeniem
+vario = variogram(PM10 ~ 1, locations = pomiary,
+                        cutoff = 18000, width = 1200, map = FALSE)
+plot(vario)
 
+model = vgm(15, "Gau", 5000, 
+            add.to = vgm(5, model = "Sph",
+                         range = 12000, nugget = 13))
+
+
+fitted = fit.variogram(vario, model)
+fitted
+plot(vario, model = fitted)
