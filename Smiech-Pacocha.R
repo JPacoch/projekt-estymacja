@@ -10,7 +10,11 @@ library(fields)
 #Wczytanie danych wejsciowych
 pomiary = read_sf("dane/train.gpkg")
 siatka = read_stars("dane/pusta_siatka.tif")
+lc = read_stars("dane/lc.tif")
+elev = read_stars("dane/elev.tif")
 
+lc = as.factor(lc)
+plot(lc)
 #nadanie informacji o ukladzie 
 siatka = st_set_crs(siatka, value = 2180)
 pomiary = st_set_crs(pomiary, value = 2180)
@@ -106,7 +110,7 @@ idw_pomiary = idw(PM10 ~ 1, locations = pomiary_clean,
 
 plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
 
-#przed wyczyszczeniem
+#wersja przed wyczyszczeniem
 vario = variogram(PM10 ~ 1, locations = pomiary,
                         cutoff = 18000, width = 1200, map = FALSE)
 plot(vario)
