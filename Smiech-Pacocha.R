@@ -128,10 +128,48 @@ test = testing(pomiary_split)
 vario_train = variogram(PM10 ~ 1, locations = train,
                   cutoff = 18000, width = 1200, map = FALSE)
 
-plot(vario)
+plot(vario_train)
 fitted_train = fit.variogram(vario_train, model)
 plot(vario_train, model = fitted_gaunug)
 
+#metoda krigingu prostego 
+test_sk = krige(PM10 ~ 1, 
+                locations = train,
+                newdata = test,
+                model = fitted_train,
+                beta = 15)
+fault_sk = test$PM10 - test_sk$var1.pred
+summary(fault_sk)
+RMSE_sk = sqrt(mean((test$PM10 - test_sk$var1.pred) ^ 2))
+RMSE_sk
+
+ggplot(test_sk, aes(var1.pred, test$PM10)) +
+  geom_point() +
+  xlab("Estymacja") +
+  ylab("Obserwacja")
+
+#metoda krigingu zwyklego
+test_ok = krige(PM10 ~ 1,
+           locations = train,
+           newdata = test, 
+           model = fitted_train, 
+           nmax = 14)
+fault_ok = test$PM10 - test_ok$var1.pred
+summary(fault_ok)
+RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
+RMSE_ok
+
+ggplot(test_ok, aes(var1.pred, test$PM10)) +
+  geom_point() +
+  xlab("Estymacja") +
+  ylab("Obserwacja")
+
+#metoda krigingu z trendem
+
+#metoda krigingu lvm
+coef = lm(PM10 ~ elev1, pomiary)$coef
+coef
+plot(elev)
 
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
