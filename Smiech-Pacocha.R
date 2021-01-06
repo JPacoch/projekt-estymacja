@@ -139,11 +139,15 @@ model_zl = vgm(4, "Gau", 1600,
 fitted_zl1 = fit.variogram(vario, model_zl)
 plot(vario, model = fitted_zl1)
 
-model_zl2 = vgm(10, "Gau", 4000, 
-                add.to = vgm(2, model = "Gau",
-                             range = 1000, nugget = 15))
+model_zl2 = vgm(5, "Sph", 5000, 
+                add.to = vgm(3, model = "Gau",
+                             range = 6000, nugget = 15))
 fitted_zl2 = fit.variogram(vario, model_zl2)
 plot(vario, model = fitted_zl2)
+
+model= vgm(psill = 20, model = "Exp", range = 600)
+fitted = fit.variogram(vario, model)
+plot(vario, model = fitted)
 
 #utworzenie zbiorow treningowych, testowych
 set.seed(494)
@@ -155,11 +159,14 @@ vario_train = variogram(PM10 ~ 1, locations = train,
                         cutoff = 8100)
 plot(vario_train)
 
-model_zlt = vgm(10, "Gau", 4000, 
-                add.to = vgm(2, model = "Gau",
-                             range = 1000, nugget = 15))
-fitted_zlt = fit.variogram(vario_train, model_zl2)
-plot(vario, model = fitted_zl2)
+model_zlt = vgm(5, "Sph", 5000, 
+                add.to = vgm(10, model = "Gau",
+                             range = 6000, nugget = 15))
+fitted_zlt = fit.variogram(vario_train, model_zlt)
+plot(vario_train, model = fitted_zlt)
+
+fittedt = fit.variogram(vario_train, model)
+plot(vario, model = fittedt)
 
 #metoda krigingu prostego 
 mean(pomiary$PM10)
