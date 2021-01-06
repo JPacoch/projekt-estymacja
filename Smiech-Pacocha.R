@@ -7,12 +7,15 @@ library(gstat)
 library(tmap)
 library(fields)
 library(rsample)
+library(tidyverse)
 #Wczytanie danych wejsciowych
 pomiary = read_sf("dane/train.gpkg")
 siatka = read_stars("dane/pusta_siatka.tif")
 lc = read_stars("dane/lc.tif")
 elev = read_stars("dane/elev.tif")
 lc = as.factor(lc)
+lc_legend = read_sf("dane/lc_legend.xls", encoding = "UTF-8")
+print(lc_legend)
 
 #nadanie informacji o ukladzie 
 siatka = st_set_crs(siatka, value = 2180)
@@ -70,6 +73,10 @@ ggplot(pomiary, aes(y = PM10)) +
 #z kominow domow jednorodzinnych moze miec znaczacy udzial w stezeniu 
 #PM10 na tym obszarze. Podobne wnioski wysnuwane sa rowniez w lokalnej
 #prasie.
+#
+#Wartosci te naszym zdaniem nie sa wynikiem bledu pomiarowego, a empirycznymi
+#danymi dot. zjawiska. Ich usuniecie mogloby, wg nas, skutkowac bledna
+#estymacja wartosci PM10 na okolicznym obszarze.
 
 
 #quantile_pomiary = quantile(pomiary$PM10)
@@ -165,7 +172,43 @@ ggplot(test_ok, aes(var1.pred, test$PM10)) +
   ylab("Obserwacja")
 
 #metoda krigingu z trendem
+trainkzt = train
+siatkakzt = siatka
 
+trainkzt$x = st_coordinates(train)[, 1]
+trainkzt$y = st_coordinates(train)[, 2]
+
+# dodanie współrzędnych do siatki
+siatkakzt$x = st_coordinates(siatka)[, 1]
+siatkakzt$y = st_coordinates(siatka)[, 2]
+
+siatkakzt$x[is.na(siatkakzt$X2)] = NA
+siatkakzt$y[is.na(siatkakzt$X2)] = NA
+
+vario_kzt = variogram(PM10 ~ x + y, locations = trainkzt)
+plot(vario_kzt)
+
+model_kzt = vgm(model = "Exp", nugget = 1)
+fitted_kzt = fit.variogram(vario_kzt, model_kzt)
+plot(vario_kzt, fitted_kzt)
+
+test_kzt = krige(PM10 ~ 1, 
+            locations = trainkzt, 
+            newdata = test, 
+            model = fitted_kzt)
+summary(kzt)
+
+fault_kzt = test$PM10 - test_kzt$var1.pred
+summary(fault_kzt)
+
+RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
+RMSE_kzt
+
+write.csv(RMSE_kzt, file = 'Smiech_Pacocha.csv')
+ggplot(test_kzt, aes(var1.pred, test$PM10)) +
+  geom_point() +
+  xlab("Estymacja") +
+  ylab("Obserwacja")
 #metoda krigingu lvm
 coef = lm(PM10 ~ elev1, pomiary)$coef
 coef
