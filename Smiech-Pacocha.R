@@ -117,14 +117,14 @@ fitted_gaunug = fit.variogram(vario, model)
 fitted_gaunug
 plot(vario, model = fitted_gaunug)
 
-model_zl = vgm(8, "Gau", 6000, 
-                add.to = vgm(4.5, model = "Exp",
-                             range = 2000, nugget = 14))
+model_zl = vgm(4, "Gau", 1600, 
+                add.to = vgm(10, model = "Bes",
+                             range = 900, nugget = 13))
 fitted_gausph = fit.variogram(vario, model_zl)
 plot(vario, model = fitted_gausph)
 
 
-set.seed(123)
+set.seed(351)
 pomiary_split = initial_split(pomiary, prop = 0.75, strata = PM10)
 train = training(pomiary_split)
 test = testing(pomiary_split)
