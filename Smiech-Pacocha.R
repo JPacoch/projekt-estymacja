@@ -7,7 +7,7 @@ library(gstat)
 library(tmap)
 library(fields)
 library(rsample)
-library(tidyverse)
+#library(tidyverse)
 #Wczytanie danych wejsciowych
 pomiary = read_sf("dane/train.gpkg")
 siatka = read_stars("dane/pusta_siatka.tif")
@@ -109,19 +109,17 @@ vario = variogram(PM10 ~ 1, locations = pomiary,
                       cutoff = 18000, width = 1200, map = FALSE)
 plot(vario) #zjawisko nie wykazuje anizotropii
 
-model = vgm(psill = 5, model = "Gau", range = 4000, nugget = 13)
+model = vgm(psill = 5, model = "Gau", range = 4000, nugget = 15)
 
 #gau + nugget wyglada spoko
 plot(vario, model = model)
-
 fitted_gaunug = fit.variogram(vario, model)
 fitted_gaunug
-
 plot(vario, model = fitted_gaunug)
 
-model_zl = vgm(8, "Gau", 3000, 
-                add.to = vgm(5, model = "Exp",
-                             range = 9000, nugget = 14))
+model_zl = vgm(8, "Gau", 6000, 
+                add.to = vgm(4.5, model = "Exp",
+                             range = 2000, nugget = 14))
 fitted_gausph = fit.variogram(vario, model_zl)
 plot(vario, model = fitted_gausph)
 
@@ -142,7 +140,7 @@ plot(vario_train, model = fitted_gaunug)
 test_sk = krige(PM10 ~ 1, 
                 locations = train,
                 newdata = test,
-                model = fitted_train,
+                model = fitted_gausph,
                 beta = 15)
 fault_sk = test$PM10 - test_sk$var1.pred
 summary(fault_sk)
@@ -158,7 +156,7 @@ ggplot(test_sk, aes(var1.pred, test$PM10)) +
 test_ok = krige(PM10 ~ 1,
            locations = train,
            newdata = test, 
-           model = fitted_train, 
+           model = fitted_gausph, 
            nmax = 14)
 fault_ok = test$PM10 - test_ok$var1.pred
 summary(fault_ok)
@@ -194,12 +192,11 @@ plot(vario_kzt, fitted_kzt)
 test_kzt = krige(PM10 ~ 1, 
             locations = trainkzt, 
             newdata = test, 
-            model = fitted_kzt)
+            model = fitted_gausph)
 summary(kzt)
 
 fault_kzt = test$PM10 - test_kzt$var1.pred
 summary(fault_kzt)
-
 RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
 RMSE_kzt
 
