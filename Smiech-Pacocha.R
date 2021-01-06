@@ -203,7 +203,8 @@ summary(fault_kzt)
 RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
 RMSE_kzt
 
-write.csv(RMSE_kzt, file = 'Smiech_Pacocha.csv')
+write.csv(RMSE_kzt, file = 'Smiech_Pacocha.csv',
+          row.names = FALSE)
 
 ggplot(test_kzt, aes(var1.pred, test$PM10)) +
   geom_point() +
