@@ -162,7 +162,16 @@ fault_ok = test$PM10 - test_ok$var1.pred
 summary(fault_ok)
 RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
 RMSE_ok
+write.csv(RMSE_ok, file = 'Smiech_Pacocha.csv',
+          row.names = FALSE)
 
+
+ok = krige(PM10 ~ 1,
+                locations = pomiary,
+                newdata = siatka, 
+                model = fitted_gausph, 
+                nmax = 16)
+plot(ok["var1.pred"], col = palette)
 ggplot(test_ok, aes(var1.pred, test$PM10)) +
   geom_point() +
   xlab("Estymacja") +
@@ -193,15 +202,12 @@ test_kzt = krige(PM10 ~ 1,
             locations = trainkzt, 
             newdata = test, 
             model = fitted_gausph)
-summary(kzt)
+summary(test_kzt)
 
 fault_kzt = test$PM10 - test_kzt$var1.pred
 summary(fault_kzt)
 RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
 RMSE_kzt
-
-write.csv(RMSE_kzt, file = 'Smiech_Pacocha.csv',
-          row.names = FALSE)
 
 ggplot(test_kzt, aes(var1.pred, test$PM10)) +
   geom_point() +
@@ -215,6 +221,5 @@ plot(elev)
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
                  newdata = siatka, idp = 2)
-
 plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
 
