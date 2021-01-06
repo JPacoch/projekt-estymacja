@@ -15,7 +15,6 @@ lc = read_stars("dane/lc.tif")
 elev = read_stars("dane/elev.tif")
 lc = as.factor(lc)
 lc_legend = read_sf("dane/lc_legend.xls", encoding = "UTF-8")
-print(lc_legend)
 
 #nadanie informacji o ukladzie 
 siatka = st_set_crs(siatka, value = 2180)
@@ -205,6 +204,7 @@ RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
 RMSE_kzt
 
 write.csv(RMSE_kzt, file = 'Smiech_Pacocha.csv')
+
 ggplot(test_kzt, aes(var1.pred, test$PM10)) +
   geom_point() +
   xlab("Estymacja") +
