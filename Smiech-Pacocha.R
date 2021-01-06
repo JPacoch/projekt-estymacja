@@ -213,11 +213,11 @@ siatkakzt$y[is.na(siatkakzt$X2)] = NA
 vario_kzt = variogram(PM10 ~ x + y, locations = trainkzt)
 plot(vario_kzt)
 
-model_kzt = vgm(model = "Exp", nugget = 1)
+model_kzt = vgm(model = "Wav", nugget = 1)
 fitted_kzt = fit.variogram(vario_kzt, model_kzt)
 plot(vario_kzt, fitted_kzt)
 
-test_kzt = krige(PM10 ~ x + y, 
+test_kzt = krige(PM10 ~ 1, 
             locations = trainkzt, 
             newdata = test, 
             model = fitted_kzt)
