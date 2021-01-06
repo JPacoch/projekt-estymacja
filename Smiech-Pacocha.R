@@ -100,22 +100,28 @@ ggplot(pomiary, aes(y = PM10)) +
 #ggplot(pomiary_clean, aes(y = PM10)) +
 #  scale_x_discrete() + geom_boxplot()
 
-#modelowanie
 vario_cloud = variogram(PM10 ~ 1, locations = pomiary, 
                         cloud = TRUE)
 plot(vario_cloud)
 
 vario = variogram(PM10 ~ 1, locations = pomiary,
                       cutoff = 18000, width = 1200, map = FALSE)
-plot(vario) #zjawisko nie wykazuje anizotropii
 
+vario_map = variogram(PM10 ~ 1, locations = pomiary,
+                  cutoff = 18000, width = 1200, map = TRUE)
+plot(vario_map, 
+     col.regions = hcl.colors(40, palette = "ag_GrnYl", rev = TRUE)) 
+#zjawisko nie wykazuje anizotropii
+
+
+#modelowanie
 model = vgm(psill = 5, model = "Gau", range = 4000, nugget = 15)
 
 #gau + nugget wyglada spoko
 plot(vario, model = model)
 fitted_gaunug = fit.variogram(vario, model)
-fitted_gaunug
 plot(vario, model = fitted_gaunug)
+fitted_gaunug
 
 model_zl = vgm(4, "Gau", 1600, 
                 add.to = vgm(10, model = "Bes",
@@ -222,4 +228,3 @@ plot(elev)
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
                  newdata = siatka, idp = 2)
 plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
-
