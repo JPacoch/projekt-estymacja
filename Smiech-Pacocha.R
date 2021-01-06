@@ -8,6 +8,7 @@ library(tmap)
 library(fields)
 library(rsample)
 library(rgeos)
+library(geostatbook)
 #library(tidyverse)
 #Wczytanie danych wejsciowych
 pomiary = read_sf("dane/train.gpkg")
@@ -21,7 +22,7 @@ boundary = read_sf("dane/granica.shp")
 #nadanie informacji o ukladzie 
 siatka = st_set_crs(siatka, value = 2180)
 pomiary = st_set_crs(pomiary, value = 2180)
-
+elev = st_set_crs(elev, value = 2180)
 #przygotowanie palety kolorow
 palette = hcl.colors(12, palette = "Temps")
 
@@ -29,7 +30,6 @@ palette = hcl.colors(12, palette = "Temps")
 #na tle siatki (m. Poznan)
 plot(siatka, reset = FALSE)
 plot((pomiary), add = TRUE)
-#plot((elev), add = TRUE)
 
 tm_shape(siatka) +
   tm_raster(legend.show = FALSE) +
@@ -37,14 +37,7 @@ tm_shape(pomiary) + tm_symbols(col = 'red')
 tmap_mode('view')
 
 #eksploracjna analiza danych
-
-median(pomiary$PM10)
-mean(pomiary$PM10) #zbliżona wartosc mediany i sredniej
-
-min(pomiary$PM10) #bledna wartosc min
-max(pomiary$PM10)
-
-sd(pomiary$PM10)
+summary(pomiary) #bledna wartosc min; mediana zblizona do srednej
 
 ggplot(pomiary,aes(PM10)) + geom_histogram() #2 wartosci odstajace
 #-40 i 0 to wartosci bledne, nie jest mozliwe ujemne lub zerowe stezenie
@@ -104,7 +97,7 @@ ggplot(pomiary, aes(y = PM10)) +
 
 #Przestrzenna analiza danych
 #Miary relacji przestrzennych
-hscat(PM10 ~ 1, data = pomiary, breaks = seq(0, 12000, by = 1500))
+hscat(PM10 ~ 1, data = pomiary, breaks = seq(0, 8100, by = 1000))
 
 covario = variogram(PM10 ~ 1, locations = pomiary,
                     covariogram = TRUE)
@@ -120,91 +113,83 @@ plot(vario_cloud)
 area_sample = st_area(boundary) / nrow(pomiary)
 sqrt(area_sample) #srednia odleglosc miedzy punktami
 
+#obliczenie połowy pierwiastka powierzchni użyte do ustalenia
+#maksymalnego zasięgu semiwariogramu.
 area_poz = st_area(boundary)
 0.5 * sqrt(area_poz)
 
+8100/15 #obliczenie parametru width 
+
 vario = variogram(PM10 ~ 1, locations = pomiary,
-                      cutoff = 8088)
+                  cutoff = 8100, width = 540)
 plot(vario)
 
 
-vario_map = variogram(PM10 ~ 1, locations = pomiary,
-                  cutoff = 8088, width = 1000, map = TRUE)
+vario_map = variogram(PM10 ~ 1, threshod = 30, locations = pomiary,
+                  cutoff = 8100, width = 540, map = TRUE)
 plot(vario_map, 
      col.regions = hcl.colors(40, palette = "ag_GrnYl", rev = TRUE)) 
 #zjawisko nie wykazuje anizotropii
 
 
 #modelowanie
-model = vgm(psill = 5, model = "Gau", range = 4000, nugget = 15)
-
-#gau + nugget wyglada spoko
-plot(vario, model = model)
-fitted_gaunug = fit.variogram(vario, model)
-plot(vario, model = fitted_gaunug)
-fitted_gaunug
-
 model_zl = vgm(4, "Gau", 1600, 
                 add.to = vgm(10, model = "Bes",
                              range = 900, nugget = 13))
-fitted_gausph = fit.variogram(vario, model_zl)
-plot(vario, model = fitted_gausph)
+fitted_zl1 = fit.variogram(vario, model_zl)
+plot(vario, model = fitted_zl1)
 
-model_zl2 = vgm(12, "Sph", 3200, 
-                add.to = vgm(1, model = "Bes",
-                             range = 1700, nugget = 11.5))
-fitted_gausph2 = fit.variogram(vario, model_zl2)
-plot(vario, model = fitted_gausph2)
+model_zl2 = vgm(10, "Gau", 4000, 
+                add.to = vgm(2, model = "Gau",
+                             range = 1000, nugget = 15))
+fitted_zl2 = fit.variogram(vario, model_zl2)
+plot(vario, model = fitted_zl2)
 
-set.seed(351)
+#utworzenie zbiorow treningowych, testowych
+set.seed(494)
 pomiary_split = initial_split(pomiary, prop = 0.75, strata = PM10)
 train = training(pomiary_split)
 test = testing(pomiary_split)
 
 vario_train = variogram(PM10 ~ 1, locations = train,
-                  cutoff = 8088, map = FALSE)
-
+                        cutoff = 8100)
 plot(vario_train)
-fitted_train = fit.variogram(vario_train, model)
-plot(vario_train, model = fitted_gaunug)
+
+model_zlt = vgm(10, "Gau", 4000, 
+                add.to = vgm(2, model = "Gau",
+                             range = 1000, nugget = 15))
+fitted_zlt = fit.variogram(vario_train, model_zl2)
+plot(vario, model = fitted_zl2)
 
 #metoda krigingu prostego 
 mean(pomiary$PM10)
 test_sk = krige(PM10 ~ 1, 
                 locations = train,
                 newdata = test,
-                model = fitted_gausph2,
+                model = fitted_zlt,
                 beta = 33)
 fault_sk = test$PM10 - test_sk$var1.pred
-summary(fault_sk)
 RMSE_sk = sqrt(mean((test$PM10 - test_sk$var1.pred) ^ 2))
 RMSE_sk
 
+#wykres rozrzutu
 ggplot(test_sk, aes(var1.pred, test$PM10)) +
   geom_point() +
   xlab("Estymacja") +
   ylab("Obserwacja")
 
+
 #metoda krigingu zwyklego
 test_ok = krige(PM10 ~ 1,
            locations = train,
            newdata = test, 
-           model = fitted_gausph2, 
-           nmax = 14)
+           model = fitted_zlt, 
+           nmax = 27)
 fault_ok = test$PM10 - test_ok$var1.pred
-summary(fault_ok)
 RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
 RMSE_ok
-#write.csv(RMSE_ok, file = 'Smiech_Pacocha.csv',
- #         row.names = FALSE)
 
-
-ok = krige(PM10 ~ 1,
-                locations = pomiary,
-                newdata = siatka, 
-                model = fitted_gausph2, 
-                nmax = 16)
-plot(ok["var1.pred"], col = palette)
+#wykres rozrzutu
 ggplot(test_ok, aes(var1.pred, test$PM10)) +
   geom_point() +
   xlab("Estymacja") +
@@ -213,14 +198,15 @@ ggplot(test_ok, aes(var1.pred, test$PM10)) +
 #metoda krigingu z trendem
 trainkzt = train
 siatkakzt = siatka
+pomiarykzt = pomiary
 
 trainkzt$x = st_coordinates(train)[, 1]
 trainkzt$y = st_coordinates(train)[, 2]
-
+pomiarykzt$x = st_coordinates(pomiary)[, 1]
+pomiarykzt$y = st_coordinates(pomiary)[, 2]
 # dodanie współrzędnych do siatki
 siatkakzt$x = st_coordinates(siatka)[, 1]
 siatkakzt$y = st_coordinates(siatka)[, 2]
-
 siatkakzt$x[is.na(siatkakzt$X2)] = NA
 siatkakzt$y[is.na(siatkakzt$X2)] = NA
 
@@ -231,28 +217,66 @@ model_kzt = vgm(model = "Exp", nugget = 1)
 fitted_kzt = fit.variogram(vario_kzt, model_kzt)
 plot(vario_kzt, fitted_kzt)
 
-test_kzt = krige(PM10 ~ 1, 
+test_kzt = krige(PM10 ~ x + y, 
             locations = trainkzt, 
             newdata = test, 
-            model = fitted_gausph2)
-summary(test_kzt)
+            model = fitted_kzt)
 
 fault_kzt = test$PM10 - test_kzt$var1.pred
-summary(fault_kzt)
 RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
 RMSE_kzt
 
+#wykres rozrzutu
 ggplot(test_kzt, aes(var1.pred, test$PM10)) +
   geom_point() +
   xlab("Estymacja") +
   ylab("Obserwacja")
+
+#KROSWALIDACJA
+#kroswalidacja sk
+cv_sk = krige.cv(PM10 ~ 1,
+                 locations = pomiary,
+                 model = fitted_zl2,
+                 beta = 33)
+RMSE_cv_sk = sqrt(mean((cv_sk$residual) ^ 2))
+RMSE_cv_sk
+
+#kroswalidacja ok
+cv_ok = krige.cv(PM10 ~ 1,
+                 locations = pomiary,
+                 model = fitted_zl2,
+                 nmax = 27)
+RMSE_cv_ok = sqrt(mean((cv_ok$residual) ^ 2))
+RMSE_cv_ok
+
+#kroswalidacja kzt
+vario2 = variogram(PM10 ~ x + y, locations = pomiarykzt)
+plot(vario2)
+model2 = vgm(model = 'Sph', nugget = 10)
+model2 = fit.variogram(vario2, model2)
+plot(vario2, model2)
+
+
+cv_kzt = krige.cv(PM10 ~ x + y,
+                  locations = pomiarykzt,
+                  model = model2)
+RMSE_cv_kzt = sqrt(mean((cv_kzt$residual) ^ 2))
+RMSE_cv_kzt
+
 #metoda krigingu lvm
-coef = lm(PM10 ~ elev1, pomiary)$coef
+pomiary_elev = st_join(pomiary, st_as_sf(elev))
+coef = lm(PM10 ~ elev.tif, pomiary_elev)$coef
 coef
-plot(elev)
 
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
                  newdata = siatka, idp = 2)
 plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
 
+#finalna estymacja
+ok = krige(PM10 ~ 1,
+           locations = pomiary,
+           newdata = siatka, 
+           model = fitted_gausph2, 
+           nmax = 27)
+plot(ok["var1.pred"], col = palette)
