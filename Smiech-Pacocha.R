@@ -23,8 +23,7 @@ boundary = read_sf("dane/granica.shp")
 siatka = st_set_crs(siatka, value = 2180)
 pomiary = st_set_crs(pomiary, value = 2180)
 elev = st_set_crs(elev, value = 2180)
-#lc = st_set_crs(lc, value = 2180)
-
+lc = st_set_crs(lc, value = 2180)
 #przygotowanie palety kolorow
 palette = hcl.colors(12, palette = "Temps")
 
@@ -283,14 +282,18 @@ cor.test(pomiary_elev$PM10, pomiary_elev$elev.tif, method = "pearson")
 #potwiedzenie wizualnej analizy danych; zbiory PM10 oraz elev.tif nie 
 #wykazuja korelacji liniowej
 
+#testowanie zbioru lc
 pomiary_lc = st_join(pomiary, st_as_sf(lc))
-ggplot(pomiary_lc, aes(PM10, lc)) + geom_point()
-plot(lc)
+ggplot(pomiary_lc, aes(PM10, lc.tif,na.rm = TRUE)) + geom_point(na.rm = TRUE)
+pomiary_lc$lc.tif = as.factor(pomiary_lc$lc.tif)
+plot(pomiary_lc$lc.tif)
+#pomiary_lc = na.omit(pomiary_lc$lc.tif)
+print(pomiary_lc$lc.tif)
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
                  newdata = siatka, idp = 2)
 plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
-
+plot(lc)
 #finalna estymacja
 ok = krige(PM10 ~ 1,
            locations = pomiary,
