@@ -13,4 +13,4 @@ używając pierwiastka średniego błędu kwadratowego (RMSE). Formalna ocena mo
 
 ### Przykładowa interpolacja metodą średniej ważonej odległością (IDW):
 
-![alt text](https://github.com/JPacoch/projekt-estmacja/dane/IDW.PNG?raw=true)
+![map](https://raw.githubusercontent.com/JPacoch/projekt-estmacja/dane/IDW.PNG)
