@@ -292,8 +292,9 @@ print(pomiary_lc$lc.tif)
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
                  newdata = siatka, idp = 2)
-plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
-plot(lc)
+  plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
+
+
 #finalna estymacja
 ok = krige(PM10 ~ 1,
            locations = pomiary,
