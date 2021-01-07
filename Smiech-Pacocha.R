@@ -23,6 +23,8 @@ boundary = read_sf("dane/granica.shp")
 siatka = st_set_crs(siatka, value = 2180)
 pomiary = st_set_crs(pomiary, value = 2180)
 elev = st_set_crs(elev, value = 2180)
+#lc = st_set_crs(lc, value = 2180)
+
 #przygotowanie palety kolorow
 palette = hcl.colors(12, palette = "Temps")
 
@@ -270,11 +272,20 @@ cv_kzt = krige.cv(PM10 ~ x + y,
 RMSE_cv_kzt = sqrt(mean((cv_kzt$residual) ^ 2))
 RMSE_cv_kzt
 
-#metoda krigingu lvm
+#testowanie zbioru elev
 pomiary_elev = st_join(pomiary, st_as_sf(elev))
-coef = lm(PM10 ~ elev.tif, pomiary_elev)$coef
-coef
+shapiro.test(pomiary_elev$PM10) #rozklad normalny zbioru PM10
+shapiro.test(pomiary_elev$elev.tif) #rozklad normalny zbioru elev.tif
+ggplot(pomiary_elev, aes(PM10, elev.tif)) + geom_point() + stat_smooth(method = lm)
+#zageszczenie PM10 nie wykazuje korelacji 
 
+cor.test(pomiary_elev$PM10, pomiary_elev$elev.tif, method = "pearson")
+#potwiedzenie wizualnej analizy danych; zbiory PM10 oraz elev.tif nie 
+#wykazuja korelacji liniowej
+
+pomiary_lc = st_join(pomiary, st_as_sf(lc))
+ggplot(pomiary_lc, aes(PM10, lc)) + geom_point()
+plot(lc)
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
                  newdata = siatka, idp = 2)
@@ -287,3 +298,5 @@ ok = krige(PM10 ~ 1,
            model = fitted_gausph2, 
            nmax = 27)
 plot(ok["var1.pred"], col = palette)
+
+###
