@@ -9,15 +9,14 @@ library(fields)
 library(rsample)
 library(rgeos)
 library(geostatbook)
-#library(tidyverse)
+
 #Wczytanie danych wejsciowych
 pomiary = read_sf("dane/train.gpkg")
 siatka = read_stars("dane/pusta_siatka.tif")
 lc = read_stars("dane/lc.tif")
 elev = read_stars("dane/elev.tif")
-#lc = as.factor(lc)
 lc_legend = read_sf("dane/lc_legend.xls", encoding = "UTF-8")
-boundary = read_sf("dane/granica.shp")
+boundary = read_sf("dane/granica.shp") #dane zewnetrzne; granica m. Poznan
 
 #nadanie informacji o ukladzie 
 siatka = st_set_crs(siatka, value = 2180)
@@ -32,10 +31,10 @@ palette = hcl.colors(12, palette = "Temps")
 plot(siatka, reset = FALSE)
 plot((pomiary), add = TRUE)
 
+tmap_mode('view')
 tm_shape(siatka) +
   tm_raster(legend.show = FALSE) +
 tm_shape(pomiary) + tm_symbols(col = 'red')
-tmap_mode('view')
 
 #eksploracjna analiza danych
 summary(pomiary) #bledna wartosc min; mediana zblizona do srednej
@@ -53,7 +52,7 @@ summary(pomiary$PM10)
 
 ggplot(pomiary, aes(y = PM10)) +
   scale_x_discrete()+ geom_boxplot() #zbiór charakteryzuje sie 
-#wystepowaniem sporej liczby wartosci odstajacych
+#wystepowaniem kilku wartosci odstajacych
 
 
 #WAŻNE
@@ -71,7 +70,8 @@ ggplot(pomiary, aes(y = PM10)) +
 #
 #Wartosci te naszym zdaniem nie sa wynikiem bledu pomiarowego, a empirycznymi
 #danymi dot. zjawiska. Ich usuniecie mogloby, wg nas, skutkowac bledna
-#estymacja wartosci PM10 na okolicznym obszarze.
+#estymacja wartosci PM10 na okolicznym obszarze, a takze na wschodnich
+#terenach m. Poznan.
 
 
 #quantile_pomiary = quantile(pomiary$PM10)
@@ -150,6 +150,7 @@ model= vgm(psill = 20, model = "Exp", range = 600)
 fitted = fit.variogram(vario, model)
 plot(vario, model = fitted)
 
+#WALIDACJA PODZBIOREM
 #utworzenie zbiorow treningowych, testowych
 set.seed(494)
 pomiary_split = initial_split(pomiary, prop = 0.75, strata = PM10)
@@ -276,11 +277,11 @@ pomiary_elev = st_join(pomiary, st_as_sf(elev))
 shapiro.test(pomiary_elev$PM10) #rozklad normalny zbioru PM10
 shapiro.test(pomiary_elev$elev.tif) #rozklad normalny zbioru elev.tif
 ggplot(pomiary_elev, aes(PM10, elev.tif)) + geom_point() + stat_smooth(method = lm)
-#zageszczenie PM10 nie wykazuje korelacji 
+#zageszczenie PM10 nie wykazuje korelacji z wysokoscia terenu 
 
 cor.test(pomiary_elev$PM10, pomiary_elev$elev.tif, method = "pearson")
 #potwiedzenie wizualnej analizy danych; zbiory PM10 oraz elev.tif nie 
-#wykazuja korelacji liniowej
+#wykazuja korelacji
 
 #testowanie zbioru lc
 pomiary_lc = st_join(pomiary, st_as_sf(lc))
@@ -289,6 +290,7 @@ pomiary_lc$lc.tif = as.factor(pomiary_lc$lc.tif)
 plot(pomiary_lc$lc.tif)
 #pomiary_lc = na.omit(pomiary_lc$lc.tif)
 print(pomiary_lc$lc.tif)
+
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
                  newdata = siatka, idp = 2)
