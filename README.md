@@ -1,5 +1,8 @@
 # projekt-estymacja
-
+<!-- badges: start -->
+[![Lifecycle:
+maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+<!-- badges: end -->
 ### Dane wejściowe obejmują:
 
 Plik train.gpkg zawierający średnie wartości punktowych pomiarów PM10 (aerozoli atmosferycznych (pył zawieszony) o średnicy nie większej niż 10 μm) w grudniu 2019 roku do celu estymacji,
