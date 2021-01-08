@@ -140,9 +140,9 @@ model_zl = vgm(4, "Gau", 1600,
 fitted_zl1 = fit.variogram(vario, model_zl)
 plot(vario, model = fitted_zl1)
 
-model_zl2 = vgm(5, "Sph", 5000, 
-                add.to = vgm(3, model = "Gau",
-                             range = 6000, nugget = 15))
+model_zl2 = vgm(6, "Sph", 5000, 
+                add.to = vgm(4, model = "Gau",
+                             range = 6000, nugget = 12))
 fitted_zl2 = fit.variogram(vario, model_zl2)
 plot(vario, model = fitted_zl2)
 
@@ -175,7 +175,7 @@ mean(pomiary$PM10)
 test_sk = krige(PM10 ~ 1, 
                 locations = train,
                 newdata = test,
-                model = fitted_zlt,
+                model = fitted_zl2,
                 beta = 33)
 fault_sk = test$PM10 - test_sk$var1.pred
 RMSE_sk = sqrt(mean((test$PM10 - test_sk$var1.pred) ^ 2))
@@ -192,7 +192,7 @@ ggplot(test_sk, aes(var1.pred, test$PM10)) +
 test_ok = krige(PM10 ~ 1,
            locations = train,
            newdata = test, 
-           model = fitted_zlt, 
+           model = fitted_zl2, 
            nmax = 27)
 fault_ok = test$PM10 - test_ok$var1.pred
 RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
@@ -229,7 +229,7 @@ plot(vario_kzt, fitted_kzt)
 test_kzt = krige(PM10 ~ 1, 
             locations = trainkzt, 
             newdata = test, 
-            model = fitted_kzt)
+            model = fitted_zl2)
 
 fault_kzt = test$PM10 - test_kzt$var1.pred
 RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
@@ -268,7 +268,7 @@ plot(vario2, model2)
 
 cv_kzt = krige.cv(PM10 ~ x + y,
                   locations = pomiarykzt,
-                  model = model2)
+                  model = fitted_zl2)
 RMSE_cv_kzt = sqrt(mean((cv_kzt$residual) ^ 2))
 RMSE_cv_kzt
 
@@ -301,7 +301,7 @@ idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
 ok = krige(PM10 ~ 1,
            locations = pomiary,
            newdata = siatka, 
-           model = fitted_gausph2, 
+           model = fitted_zl2, 
            nmax = 27)
 plot(ok["var1.pred"], col = palette)
 
