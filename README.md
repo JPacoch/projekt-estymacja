@@ -10,3 +10,8 @@ pliki elev.tif i lc.tif, zawierające wysokość terenu oraz kategorie pokrycia 
 
 Stworzenie optymalnej estymacji. Korzystając z dostępnych danych stworzenie optymalnego modelu zmiennej PM10 oraz oszacowanie oceny tego modelu
 używając pierwiastka średniego błędu kwadratowego (RMSE). Formalna ocena modelu poprzez RMSE została wykonana na podstawie dwóch metod: walidacji podzbiorem oraz kroswalidacji. 
+
+### Przykładowa interpolacja metodą średniej ważonej odległością (IDW):
+
+
+![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
