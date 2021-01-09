@@ -134,21 +134,11 @@ plot(vario_map,
 
 
 #modelowanie
-model_zl = vgm(4, "Gau", 1600, 
-                add.to = vgm(10, model = "Bes",
-                             range = 900, nugget = 13))
-fitted_zl1 = fit.variogram(vario, model_zl)
-plot(vario, model = fitted_zl1)
-
-model_zl2 = vgm(6, "Sph", 5000, 
+model_zl = vgm(6, "Sph", 5000, 
                 add.to = vgm(4, model = "Gau",
                              range = 6000, nugget = 12))
-fitted_zl2 = fit.variogram(vario, model_zl2)
-plot(vario, model = fitted_zl2)
-
-model= vgm(psill = 20, model = "Exp", range = 600)
-fitted = fit.variogram(vario, model)
-plot(vario, model = fitted)
+fitted_zl2 = fit.variogram(vario, model_zl)
+plot(vario, model = fitted_zl)
 
 #WALIDACJA PODZBIOREM
 #utworzenie zbiorow treningowych, testowych
@@ -161,21 +151,22 @@ vario_train = variogram(PM10 ~ 1, locations = train,
                         cutoff = 8100)
 plot(vario_train)
 
-model_zlt = vgm(5, "Sph", 5000, 
-                add.to = vgm(10, model = "Gau",
-                             range = 6000, nugget = 15))
+model_zlt = vgm(2, "Sph", 4000, 
+                add.to = vgm(15, model = "Exp",
+                             range = 1000, nugget = 4))
 fitted_zlt = fit.variogram(vario_train, model_zlt)
 plot(vario_train, model = fitted_zlt)
 
-fittedt = fit.variogram(vario_train, model)
-plot(vario, model = fittedt)
+model = vgm(psill = 17, model = "Exp", range = 1034, nugget = 1.8)
+fitted = fit.variogram(vario_train, modelt)
+plot(vario, model = modelt)
 
 #metoda krigingu prostego 
 mean(pomiary$PM10)
 test_sk = krige(PM10 ~ 1, 
                 locations = train,
                 newdata = test,
-                model = fitted_zl2,
+                model = fitted_zlt,
                 beta = 33)
 fault_sk = test$PM10 - test_sk$var1.pred
 RMSE_sk = sqrt(mean((test$PM10 - test_sk$var1.pred) ^ 2))
@@ -192,7 +183,7 @@ ggplot(test_sk, aes(var1.pred, test$PM10)) +
 test_ok = krige(PM10 ~ 1,
            locations = train,
            newdata = test, 
-           model = fitted_zl2, 
+           model = modelt, 
            nmax = 27)
 fault_ok = test$PM10 - test_ok$var1.pred
 RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
@@ -219,17 +210,17 @@ siatkakzt$y = st_coordinates(siatka)[, 2]
 siatkakzt$x[is.na(siatkakzt$X2)] = NA
 siatkakzt$y[is.na(siatkakzt$X2)] = NA
 
-vario_kzt = variogram(PM10 ~ x + y, locations = trainkzt)
-plot(vario_kzt)
+#vario_kzt = variogram(PM10 ~ x + y, locations = trainkzt, cutoff = 8100)
+#plot(vario_kzt)
 
-model_kzt = vgm(model = "Wav", nugget = 1)
-fitted_kzt = fit.variogram(vario_kzt, model_kzt)
-plot(vario_kzt, fitted_kzt)
+#model_kzt = vgm(model = "Wav", nugget = 1)
+#fitted_kzt = fit.variogram(vario_kzt, model_kzt)
+#plot(vario_kzt, fitted_kzt)
 
 test_kzt = krige(PM10 ~ 1, 
             locations = trainkzt, 
             newdata = test, 
-            model = fitted_zl2)
+            model = fitted_zlt)
 
 fault_kzt = test$PM10 - test_kzt$var1.pred
 RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
@@ -245,7 +236,7 @@ ggplot(test_kzt, aes(var1.pred, test$PM10)) +
 #kroswalidacja sk
 cv_sk = krige.cv(PM10 ~ 1,
                  locations = pomiary,
-                 model = fitted_zl2,
+                 model = fitted_zlt,
                  beta = 33)
 RMSE_cv_sk = sqrt(mean((cv_sk$residual) ^ 2))
 RMSE_cv_sk
@@ -253,22 +244,15 @@ RMSE_cv_sk
 #kroswalidacja ok
 cv_ok = krige.cv(PM10 ~ 1,
                  locations = pomiary,
-                 model = fitted_zl2,
+                 model = fitted_zlt,
                  nmax = 27)
 RMSE_cv_ok = sqrt(mean((cv_ok$residual) ^ 2))
 RMSE_cv_ok
 
 #kroswalidacja kzt
-vario2 = variogram(PM10 ~ x + y, locations = pomiarykzt)
-plot(vario2)
-model2 = vgm(model = 'Sph', nugget = 10)
-model2 = fit.variogram(vario2, model2)
-plot(vario2, model2)
-
-
 cv_kzt = krige.cv(PM10 ~ x + y,
                   locations = pomiarykzt,
-                  model = fitted_zl2)
+                  model = fitted_zlt)
 RMSE_cv_kzt = sqrt(mean((cv_kzt$residual) ^ 2))
 RMSE_cv_kzt
 
@@ -283,6 +267,11 @@ cor.test(pomiary_elev$PM10, pomiary_elev$elev.tif, method = "pearson")
 #potwiedzenie wizualnej analizy danych; zbiory PM10 oraz elev.tif nie 
 #wykazuja korelacji
 
+plot(elev, reset = FALSE)
+plot((pomiary), add = TRUE) #nie wszystkie punkty znajduja sie w granicach
+#rastra elev. Dalsze 'okrojenie' zbioru moze miec negatywny
+#wplyw na jakosc finalnej estymacji
+
 #testowanie zbioru lc
 pomiary_lc = st_join(pomiary, st_as_sf(lc))
 ggplot(pomiary_lc, aes(PM10, lc.tif,na.rm = TRUE)) + geom_point(na.rm = TRUE)
@@ -290,6 +279,12 @@ pomiary_lc$lc.tif = as.factor(pomiary_lc$lc.tif)
 plot(pomiary_lc$lc.tif)
 #pomiary_lc = na.omit(pomiary_lc$lc.tif)
 print(pomiary_lc$lc.tif)
+
+plot(lc, reset = FALSE)
+plot((pomiary), add = TRUE) #podobnie jak w przypadku rastra elev, wiele
+#punktow pomiarowych znajduje sie poza obszarem rastra lc, co spowoduje
+#'obciecie' kolejnych istotnych pomiarow, ktore moga byc kluczowe
+#dla jakosci finalnej estymacji 
 
 #metoda sredniej wazonej odleglscia
 idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
@@ -301,7 +296,7 @@ idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
 ok = krige(PM10 ~ 1,
            locations = pomiary,
            newdata = siatka, 
-           model = fitted_zl2, 
+           model = fitted_zlt, 
            nmax = 27)
 plot(ok["var1.pred"], col = palette)
 
