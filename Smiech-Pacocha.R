@@ -17,20 +17,10 @@ lc = read_stars("dane/lc.tif")
 elev = read_stars("dane/elev.tif")
 lc_legend = read_sf("dane/lc_legend.xls", encoding = "UTF-8")
 boundary = read_sf("dane/granica.shp") #dane zewnetrzne; granica m. Poznan
-
-#nadanie informacji o ukladzie 
-#siatka = st_set_crs(siatka, value = 2180)
-#pomiary = st_set_crs(pomiary, value = 2180)
-#elev = st_set_crs(elev, value = 2180)
-#lc = st_set_crs(lc, value = 2180)
-#przygotowanie palety kolorow
 palette = hcl.colors(12, palette = "Temps")
 
 #wizualizacja  rozlozenia punktow pomiarowych
 #na tle siatki (m. Poznan)
-plot(siatka, reset = FALSE)
-plot((pomiary), add = TRUE)
-
 tmap_mode('view')
 tm_shape(siatka) +
   tm_raster(legend.show = FALSE) +
@@ -38,35 +28,30 @@ tm_shape(pomiary) + tm_symbols(col = 'red')
 
 #eksploracjna analiza danych
 summary(pomiary) #bledna wartosc min; mediana zblizona do srednej
-
 ggplot(pomiary,aes(PM10)) + geom_histogram() #2 wartosci odstajace
-#-40 i 0 to wartosci bledne, nie jest mozliwe ujemne lub zerowe stezenie
-#pylow PM10
+#-40 i -1 to wartosci bledne, nie jest mozliwe ujemne stezenie
+#pylow PM10.
 
 #odseparowanie od zbioru wartosci niedodatnich
 pomiary = filter(pomiary, pomiary$PM10 > 0 & pomiary$PM10 < 50)
 summary(pomiary$PM10)
-#odseparowana jest również wartosc powyzej 50 poniewaz jest to pomiar
-#bardzo odstajacy, w ktorego sasiedztwie nie ma pomiarow o podobnej
-#wartosci
+#odseparowana jest rowniez wartosc powyzej 50 poniewaz jest to pomiar
+#bardzo odstajacy, w ktorego sasiedztwie sa pomiary o polowe nizsze.
 
 ggplot(pomiary, aes(y = PM10)) +
-  scale_x_discrete()+ geom_boxplot() #zbiór charakteryzuje sie 
+  scale_x_discrete()+ geom_boxplot() #zbiór charakteryzuje sie wciaz
 #wystepowaniem kilku wartosci odstajacych
 
-
 #WAŻNE
-#
-#
-#Poniższy kod zostal zakomentowany poniewaz stwierdzilismy ze niektore 
-#pomiary bedace wartosciami odstajacymi moga byc istotne z punktu widzenia
-#geograficznego - jako ze znajduja sie blisko siebie, posiadaja zblizona 
-#wartosc PM10. Pomiary te wykonane zostaly w okolicach miejscowosci
-#Paczkowo, Siekierki Male, Siekierki Wielkie, w ktorych to strukturach
-#przewaza zabudowa jednorodzinna; wplyw spalonych produktow uchodzacych
-#z kominow domow jednorodzinnych moze miec znaczacy udzial w stezeniu 
-#PM10 na tym obszarze. Podobne wnioski wysnuwane sa rowniez w lokalnej
-#prasie.
+
+#Stwierdzilismy ze niektore pomiary bedace wartosciami odstajacymi moga 
+#byc istotne z punktu widzenia geograficznego - jako ze znajduja sie blisko 
+#siebie, posiadaja zblizona wartosc PM10. Pomiary te wykonane zostaly 
+#w okolicach miejscowosci Paczkowo, Siekierki Male, Siekierki Wielkie, 
+#w ktorych to strukturach przewaza zabudowa jednorodzinna; wplyw spalonych 
+#produktow uchodzacych z kominow domow jednorodzinnych moze miec znaczacy 
+#udzial w stezeniu PM10 na tym obszarze. Swarzedz jest jedna z najbardziej 
+#zaneczyszczonych czesci aglomeracji poznanskiej. Fakt ten potwierdza GIOS.
 #
 #Wartosci te naszym zdaniem nie sa wynikiem bledu pomiarowego, a empirycznymi
 #danymi dot. zjawiska. Ich usuniecie mogloby, wg nas, skutkowac bledna
@@ -74,43 +59,13 @@ ggplot(pomiary, aes(y = PM10)) +
 #terenach m. Poznan.
 
 
-#quantile_pomiary = quantile(pomiary$PM10)
-#quantile_pomiary
-#obliczenie rozstepu kwartylnego
-#iqr_pomiary = IQR(pomiary$PM10)
-#iqr_pomiary
-
-#obliczenie gornej i dolnej granicy wykluczajacej wartosci odstajace
-#upper = quantile_pomiary[2] + 1.5 * iqr_pomiary  
-#lower = quantile_pomiary[1] - 1.5 * iqr_pomiary 
-#upper
-#lower
-
-#utworzenie zbioru z odseparowanymi wartosciami odstajacymi
-#pomiary_clean = filter(pomiary, pomiary$PM10 > lower & pomiary$PM10 < upper)
-#summary(pomiary_clean$PM10)
-
-#wizualizcja 'oczyszczonego zbioru'
-#ggplot(pomiary_clean,aes(PM10)) + geom_histogram()
-
-#ggplot(pomiary_clean, aes(y = PM10)) +
-#  scale_x_discrete() + geom_boxplot()
-
 #Przestrzenna analiza danych
-#Miary relacji przestrzennych
-hscat(PM10 ~ 1, data = pomiary, breaks = seq(0, 8100, by = 1000))
-
-covario = variogram(PM10 ~ 1, locations = pomiary,
-                    covariogram = TRUE)
-plot(covario)
-
 vario_cloud = variogram(PM10 ~ 1, locations = pomiary, 
                         cloud = TRUE)
 plot(vario_cloud)
 
 #semiwariogram
 0.5 * nrow(pomiary) * (nrow(pomiary) - 1) #liczba par obserwacji
-
 area_sample = st_area(boundary) / nrow(pomiary)
 sqrt(area_sample) #srednia odleglosc miedzy punktami
 
@@ -124,77 +79,73 @@ vario = variogram(PM10 ~ 1, locations = pomiary,
                   cutoff = 8100, width = 540)
 plot(vario)
 
-
 vario_map = variogram(PM10 ~ 1, threshod = 30, locations = pomiary,
                   cutoff = 8100, width = 540, map = TRUE)
 plot(vario_map, 
      col.regions = hcl.colors(40, palette = "ag_GrnYl", rev = TRUE)) 
 #zjawisko nie wykazuje anizotropii
 
+#Modelowanie
+model_zl = vgm(6.671, "Sph", 4000, 
+               add.to = vgm(0, model = "Exp",
+                            range = 1000, nugget = 13.738))
+plot(vario, model_zl)
+
 #WALIDACJA PODZBIOREM
+#Kod oceniajacy modele na podstawie metody walidacji podzbiorem zostal 
+#zakomentowany. Pomimo, iz modele te wykazywaly sie najmniejszym przez
+#nas uzyskanym wynikiem RMSE (od ok. 3.6 do 4.1) odrzucilismy ten rodzaj
+#oceny, poniewaz "(...) jest koniecznosc posiadania (relatywnie)
+#dużego zbioru danych." (Nowosad., J., Geostatystyka w R, 2020).
+
 #utworzenie zbiorow treningowych, testowych
-set.seed(494)
-pomiary_split = initial_split(pomiary, prop = 0.75, strata = PM10)
-train = training(pomiary_split)
-test = testing(pomiary_split)
+#set.seed(494)
+#pomiary_split = initial_split(pomiary, prop = 0.75, strata = PM10)
+#train = training(pomiary_split)
+#test = testing(pomiary_split)
 
-vario_train = variogram(PM10 ~ 1, locations = train,
-                        cutoff = 8100)
-plot(vario_train)
+#vario_train = variogram(PM10 ~ 1, locations = train,
+#                        cutoff = 8100)
+#plot(vario_train)
 
-model = vgm(psill = 17, model = "Exp", range = 1034, nugget = 1.8)
-plot(vario_train, model = model)
-
-model_zlt = vgm(2, "Sph", 4000, 
-                add.to = vgm(15, model = "Exp",
-                             range = 1000, nugget = 4))
-fitted_zlt = fit.variogram(vario_train, model_zlt)
-plot(vario_train, model = fitted_zlt)
+#Modelowanie dla zbioru treningowego
+#model_zlt = vgm(2, "Sph", 4000, 
+#                add.to = vgm(15, model = "Exp",
+#                             range = 1000, nugget = 4))
+#fitted_zlt = fit.variogram(vario_train, model_zlt)
+#plot(vario_train, model = fitted_zlt)
 
 #metoda krigingu prostego 
-mean(pomiary$PM10)
-test_sk = krige(PM10 ~ 1, 
-                locations = train,
-                newdata = test,
-                model = fitted_zlt,
-                beta = 33)
-fault_sk = test$PM10 - test_sk$var1.pred
-RMSE_sk = sqrt(mean((test$PM10 - test_sk$var1.pred) ^ 2))
-RMSE_sk
-
-#wykres rozrzutu
-ggplot(test_sk, aes(var1.pred, test$PM10)) +
-  geom_point() +
-  xlab("Estymacja") +
-  ylab("Obserwacja")
-
+#mean(pomiary$PM10)
+#test_sk = krige(PM10 ~ 1, 
+#                locations = train,
+#                newdata = test,
+#                model = fitted_zlt,
+#                beta = 33)
+#fault_sk = test$PM10 - test_sk$var1.pred
+#RMSE_sk = sqrt(mean((test$PM10 - test_sk$var1.pred) ^ 2))
+#RMSE_sk
 
 #metoda krigingu zwyklego
-test_ok = krige(PM10 ~ 1,
-           locations = train,
-           newdata = test, 
-           model = fitted_zlt, 
-           nmax = 27)
-fault_ok = test$PM10 - test_ok$var1.pred
-RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
-RMSE_ok
-
-#wykres rozrzutu
-ggplot(test_ok, aes(var1.pred, test$PM10)) +
-  geom_point() +
-  xlab("Estymacja") +
-  ylab("Obserwacja")
+#test_ok = krige(PM10 ~ 1,
+#           locations = train,
+#           newdata = test, 
+#           model = fitted_zlt, 
+#           nmax = 27)
+#fault_ok = test$PM10 - test_ok$var1.pred
+#RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
+#RMSE_ok
 
 #metoda krigingu z trendem
-trainkzt = train
-testkzt = test
+#trainkzt = train
+#testkzt = test
 siatkakzt = siatka
 pomiarykzt = pomiary
 
-trainkzt$x = st_coordinates(train)[, 1]
-trainkzt$y = st_coordinates(train)[, 2]
-testkzt$x = st_coordinates(test)[, 1]
-testkzt$y = st_coordinates(test)[, 2]
+#trainkzt$x = st_coordinates(train)[, 1]
+#trainkzt$y = st_coordinates(train)[, 2]
+#testkzt$x = st_coordinates(test)[, 1]
+#testkzt$y = st_coordinates(test)[, 2]
 pomiarykzt$x = st_coordinates(pomiary)[, 1]
 pomiarykzt$y = st_coordinates(pomiary)[, 2]
 # dodanie współrzędnych do siatki
@@ -203,44 +154,40 @@ siatkakzt$y = st_coordinates(siatka)[, 2]
 siatkakzt$x[is.na(siatkakzt$X2)] = NA
 siatkakzt$y[is.na(siatkakzt$X2)] = NA
 
-test_kzt = krige(PM10 ~ x + y, 
-            locations = trainkzt, 
-            newdata = testkzt, 
-            model = fitted_zlt)
-
-fault_kzt = test$PM10 - test_kzt$var1.pred
-RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
-RMSE_kzt
-
-#wykres rozrzutu
-ggplot(test_kzt, aes(var1.pred, test$PM10)) +
-  geom_point() +
-  xlab("Estymacja") +
-  ylab("Obserwacja")
+#test_kzt = krige(PM10 ~ x + y, 
+#            locations = trainkzt, 
+#            newdata = testkzt, 
+#            model = fitted_zlt)
+#fault_kzt = test$PM10 - test_kzt$var1.pred
+#RMSE_kzt = sqrt(mean((test$PM10 - test_kzt$var1.pred) ^ 2))
+#RMSE_kzt
 
 #KROSWALIDACJA
-#kroswalidacja sk
-cv_sk = krige.cv(PM10 ~ 1,
-                 locations = pomiary,
-                 model = fitted_zlt,
-                 beta = 33)
-RMSE_cv_sk = sqrt(mean((cv_sk$residual) ^ 2))
-RMSE_cv_sk
-
-#kroswalidacja ok
+#kroswalidacja sk (odrzucona)
+#cv_sk = krige.cv(PM10 ~ 1,
+#                 locations = pomiary,
+#                 model = model_zl,
+#                 beta = 33)
+#RMSE_cv_sk = sqrt(mean((cv_sk$residual) ^ 2))
+#RMSE_cv_sk
+#MPE_cv_sk = mean(cv_sk$residual)
+#MPE_cv_sk
+#kroswalidacja ok (wybrana przez nas)
 cv_ok = krige.cv(PM10 ~ 1,
                  locations = pomiary,
-                 model = fitted_zlt,
+                 model = model_zl,
                  nmax = 27)
 RMSE_cv_ok = sqrt(mean((cv_ok$residual) ^ 2))
 RMSE_cv_ok
-
-#kroswalidacja kzt
-cv_kzt = krige.cv(PM10 ~ x + y,
-                  locations = pomiarykzt,
-                  model = fitted_zlt)
-RMSE_cv_kzt = sqrt(mean((cv_kzt$residual) ^ 2))
-RMSE_cv_kzt
+MPE_cv_ok = mean(cv_ok$residual)
+MPE_cv_ok
+#kroswalidacja kzt (odrzucona)
+#cv_kzt = krige.cv(PM10 ~ x + y,
+#                  locations = pomiarykzt,
+#                  model = model_zl)
+#RMSE_cv_kzt = sqrt(mean((cv_kzt$residual) ^ 2))
+#RMSE_cv_kzt
+#MPE = mean(cv_kzt$residual)
 
 #testowanie zbioru elev
 pomiary_elev = st_join(pomiary, st_as_sf(elev))
@@ -260,11 +207,9 @@ plot((pomiary), add = TRUE) #nie wszystkie punkty znajduja sie w granicach
 
 #testowanie zbioru lc
 pomiary_lc = st_join(pomiary, st_as_sf(lc))
-ggplot(pomiary_lc, aes(PM10, lc.tif,na.rm = TRUE)) + geom_point(na.rm = TRUE)
 pomiary_lc$lc.tif = as.factor(pomiary_lc$lc.tif)
 plot(pomiary_lc$lc.tif)
-#pomiary_lc = na.omit(pomiary_lc$lc.tif)
-print(pomiary_lc$lc.tif)
+ggplot(pomiary_lc, aes(PM10, lc.tif,na.rm = TRUE)) + geom_point(na.rm = TRUE)
 
 plot(lc, reset = FALSE)
 plot((pomiary), add = TRUE) #podobnie jak w przypadku rastra elev, wiele
@@ -272,12 +217,15 @@ plot((pomiary), add = TRUE) #podobnie jak w przypadku rastra elev, wiele
 #'obciecie' kolejnych istotnych pomiarow, ktore moga byc kluczowe
 #dla jakosci finalnej estymacji 
 
-#finalna estymacja
+#finalna estymacja i  zapis danych
 ok = krige(PM10 ~ 1,
            locations = pomiary,
            newdata = siatka, 
-           model = fitted_zlt, 
+           model = model_zl, 
            nmax = 27)
 plot(ok["var1.pred"], col = palette)
 
-###
+write.csv(RMSE_cv_ok, file = 'Smiech_Pacocha.csv',
+          row.names = FALSE)
+Smiech_Pacocha = ok["var1.pred"]
+write_stars(Smiech_Pacocha, dsn = "Smiech_Pacocha.tif")
