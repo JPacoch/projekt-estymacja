@@ -19,10 +19,10 @@ lc_legend = read_sf("dane/lc_legend.xls", encoding = "UTF-8")
 boundary = read_sf("dane/granica.shp") #dane zewnetrzne; granica m. Poznan
 
 #nadanie informacji o ukladzie 
-siatka = st_set_crs(siatka, value = 2180)
-pomiary = st_set_crs(pomiary, value = 2180)
-elev = st_set_crs(elev, value = 2180)
-lc = st_set_crs(lc, value = 2180)
+#siatka = st_set_crs(siatka, value = 2180)
+#pomiary = st_set_crs(pomiary, value = 2180)
+#elev = st_set_crs(elev, value = 2180)
+#lc = st_set_crs(lc, value = 2180)
 #przygotowanie palety kolorow
 palette = hcl.colors(12, palette = "Temps")
 
@@ -118,7 +118,6 @@ sqrt(area_sample) #srednia odleglosc miedzy punktami
 #maksymalnego zasięgu semiwariogramu.
 area_poz = st_area(boundary)
 0.5 * sqrt(area_poz)
-
 8100/15 #obliczenie parametru width 
 
 vario = variogram(PM10 ~ 1, locations = pomiary,
@@ -132,14 +131,6 @@ plot(vario_map,
      col.regions = hcl.colors(40, palette = "ag_GrnYl", rev = TRUE)) 
 #zjawisko nie wykazuje anizotropii
 
-
-#modelowanie
-model_zl = vgm(6, "Sph", 5000, 
-                add.to = vgm(4, model = "Gau",
-                             range = 6000, nugget = 12))
-fitted_zl2 = fit.variogram(vario, model_zl)
-plot(vario, model = fitted_zl)
-
 #WALIDACJA PODZBIOREM
 #utworzenie zbiorow treningowych, testowych
 set.seed(494)
@@ -151,15 +142,14 @@ vario_train = variogram(PM10 ~ 1, locations = train,
                         cutoff = 8100)
 plot(vario_train)
 
+model = vgm(psill = 17, model = "Exp", range = 1034, nugget = 1.8)
+plot(vario_train, model = model)
+
 model_zlt = vgm(2, "Sph", 4000, 
                 add.to = vgm(15, model = "Exp",
                              range = 1000, nugget = 4))
 fitted_zlt = fit.variogram(vario_train, model_zlt)
 plot(vario_train, model = fitted_zlt)
-
-model = vgm(psill = 17, model = "Exp", range = 1034, nugget = 1.8)
-fitted = fit.variogram(vario_train, modelt)
-plot(vario, model = modelt)
 
 #metoda krigingu prostego 
 mean(pomiary$PM10)
@@ -183,7 +173,7 @@ ggplot(test_sk, aes(var1.pred, test$PM10)) +
 test_ok = krige(PM10 ~ 1,
            locations = train,
            newdata = test, 
-           model = modelt, 
+           model = fitted_zlt, 
            nmax = 27)
 fault_ok = test$PM10 - test_ok$var1.pred
 RMSE_ok = sqrt(mean((test$PM10 - test_ok$var1.pred) ^ 2))
@@ -197,11 +187,14 @@ ggplot(test_ok, aes(var1.pred, test$PM10)) +
 
 #metoda krigingu z trendem
 trainkzt = train
+testkzt = test
 siatkakzt = siatka
 pomiarykzt = pomiary
 
 trainkzt$x = st_coordinates(train)[, 1]
 trainkzt$y = st_coordinates(train)[, 2]
+testkzt$x = st_coordinates(test)[, 1]
+testkzt$y = st_coordinates(test)[, 2]
 pomiarykzt$x = st_coordinates(pomiary)[, 1]
 pomiarykzt$y = st_coordinates(pomiary)[, 2]
 # dodanie współrzędnych do siatki
@@ -210,16 +203,9 @@ siatkakzt$y = st_coordinates(siatka)[, 2]
 siatkakzt$x[is.na(siatkakzt$X2)] = NA
 siatkakzt$y[is.na(siatkakzt$X2)] = NA
 
-#vario_kzt = variogram(PM10 ~ x + y, locations = trainkzt, cutoff = 8100)
-#plot(vario_kzt)
-
-#model_kzt = vgm(model = "Wav", nugget = 1)
-#fitted_kzt = fit.variogram(vario_kzt, model_kzt)
-#plot(vario_kzt, fitted_kzt)
-
-test_kzt = krige(PM10 ~ 1, 
+test_kzt = krige(PM10 ~ x + y, 
             locations = trainkzt, 
-            newdata = test, 
+            newdata = testkzt, 
             model = fitted_zlt)
 
 fault_kzt = test$PM10 - test_kzt$var1.pred
@@ -285,12 +271,6 @@ plot((pomiary), add = TRUE) #podobnie jak w przypadku rastra elev, wiele
 #punktow pomiarowych znajduje sie poza obszarem rastra lc, co spowoduje
 #'obciecie' kolejnych istotnych pomiarow, ktore moga byc kluczowe
 #dla jakosci finalnej estymacji 
-
-#metoda sredniej wazonej odleglscia
-idw_pomiary = idw(PM10 ~ 1, locations = pomiary,
-                 newdata = siatka, idp = 2)
-  plot(idw_pomiary["var1.pred"], main = "IDW", col = palette)
-
 
 #finalna estymacja
 ok = krige(PM10 ~ 1,
