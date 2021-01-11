@@ -21,6 +21,7 @@ używając pierwiastka średniego błędu kwadratowego (RMSE). Formalna ocena mo
 ### Semiwariogram i model:
 
 Wykazanie izotropii zjawiska:
+
 <img src="https://github.com/JPacoch/projekt-estymacja/blob/master/dane/izotropia.PNG" width="800px" height="auto">
 
 Wykonanie optymalnego modelu zjawiska dla semiwariogramu:
