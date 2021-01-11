@@ -16,5 +16,26 @@ używając pierwiastka średniego błędu kwadratowego (RMSE). Formalna ocena mo
 
 ### Przykładowa interpolacja metodą średniej ważonej odległością (IDW):
 
+![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
+
+### Semiwariogram i model:
+
+Wykazanie izotropii zjawiska:
+![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
+
+Wykonanie optymalnego modelu zjawiska dla semiwariogramu:
+
+![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
+
+
+### Walidacja i ocena estymacji:
+
+Walidacja podzbiorem:
+Pomimo, iż modele te wykazywały się najmniejszym przez uzyskanym wynikiem RMSE (od ok. 3.6 do 4.1) odrzucono ten rodzaj
+oceny, ponieważ "(...) jest konieczność posiadania (relatywnie) dużego zbioru danych." (Nowosad., J., Geostatystyka w R, 2020).
+
+Przyjęto operację kroswalidacji; pierwiastek średniego błędu kwadratowego (RMSE) wyniósł ~4.65.
+
+### Estymacja:
 
 ![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
