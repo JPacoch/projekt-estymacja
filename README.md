@@ -16,16 +16,16 @@ używając pierwiastka średniego błędu kwadratowego (RMSE). Formalna ocena mo
 
 ### Przykładowa interpolacja metodą średniej ważonej odległością (IDW):
 
-![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
+<img src="https://github.com/JPacoch/projekt-estymacja/blob/master/dane/IDW.PNG" width="800px" height="auto">
 
 ### Semiwariogram i model:
 
 Wykazanie izotropii zjawiska:
-![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
+<img src="https://github.com/JPacoch/projekt-estymacja/blob/master/dane/izotropia.PNG" width="800px" height="auto">
 
 Wykonanie optymalnego modelu zjawiska dla semiwariogramu:
 
-![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
+<img src="https://github.com/JPacoch/projekt-estymacja/blob/master/dane/model.PNG" width="800px" height="auto">
 
 
 ### Walidacja i ocena estymacji:
@@ -38,4 +38,4 @@ Przyjęto operację kroswalidacji; pierwiastek średniego błędu kwadratowego (
 
 ### Estymacja:
 
-![IDW](https://raw.githubusercontent.com/JPacoch/projekt-estymacja/master/dane/IDW.PNG?token=ALOOUO5FJ7UPRFTXGZ4QS7S765WRY)
+<img src="https://github.com/JPacoch/projekt-estymacja/blob/master/dane/estymacja.PNG?" width="800px" height="auto">
